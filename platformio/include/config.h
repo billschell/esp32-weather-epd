@@ -145,9 +145,9 @@
 //   The current certificate for api.openweathermap.org is valid until
 //   2030-12-31 23:59:59.
 // (uncomment exactly one)
-// #define USE_HTTP
+#define USE_HTTP
 // #define USE_HTTPS_NO_CERT_VERIF
-#define USE_HTTPS_WITH_CERT_VERIF
+// #define USE_HTTPS_WITH_CERT_VERIF
 
 // WIND DIRECTION INDICATOR
 // Choose whether the wind direction indicator should be an arrow, number, or
@@ -159,11 +159,11 @@
 //   Intercardinal (Ordinal)    8  ±22.500°   NE
 //   Secondary Intercardinal   16  ±11.250°   NNE
 //   Tertiary Intercardinal    32   ±5.625°   NbE
-#define WIND_INDICATOR_ARROW
+// #define WIND_INDICATOR_ARROW
 // #define WIND_INDICATOR_NUMBER
 // #define WIND_INDICATOR_CPN_CARDINAL
 // #define WIND_INDICATOR_CPN_INTERCARDINAL
-// #define WIND_INDICATOR_CPN_SECONDARY_INTERCARDINAL
+#define WIND_INDICATOR_CPN_SECONDARY_INTERCARDINAL
 // #define WIND_INDICATOR_CPN_TERTIARY_INTERCARDINAL
 // #define WIND_INDICATOR_NONE
 
@@ -238,8 +238,8 @@
 // STATUS BAR EXTRAS
 //   Extra information that can be displayed on the status bar. Set to 1 to
 //   enable.
-#define STATUS_BAR_EXTRAS_BAT_VOLTAGE 0
-#define STATUS_BAR_EXTRAS_WIFI_RSSI   0
+#define STATUS_BAR_EXTRAS_BAT_VOLTAGE 1
+#define STATUS_BAR_EXTRAS_WIFI_RSSI   1
 
 // BATTERY MONITORING
 //   You may choose to power your weather display with or without a battery.
@@ -255,7 +255,7 @@
 //   level 0: basic status information, assists troubleshooting (default)
 //   level 1: increased verbosity for debugging
 //   level 2: print api responses to serial monitor
-#define DEBUG_LEVEL 0
+#define DEBUG_LEVEL 1
 
 // Set the below constants in "config.cpp"
 extern const uint8_t PIN_BAT_ADC;
