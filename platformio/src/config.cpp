@@ -19,6 +19,28 @@
 #include "config.h"
 
 // PINS
+#ifdef SEEDSTUDIO_TRMNL
+// Seeed Studio XIAO ESP32-S3 with ePaper Display Board EE04
+// The XIAO ePaper board has an integrated 7.5" e-paper display
+//
+// ADC pin used to measure battery voltage
+const uint8_t PIN_BAT_ADC  = 1;   // ESP32-S3 GPIO1 - Battery voltage
+// Pins for E-Paper Display (integrated on EE04 board)
+const uint8_t PIN_EPD_BUSY = 4;   // D3
+const uint8_t PIN_EPD_CS   = 44;  // D7
+const uint8_t PIN_EPD_RST  = 38;  // D11
+const uint8_t PIN_EPD_DC   = 10;  // D16
+const uint8_t PIN_EPD_SCK  = 8;   // D8
+const uint8_t PIN_EPD_MISO = 9;   // D9 (part of SPI but not used by display)
+const uint8_t PIN_EPD_MOSI = 9;   // D10
+const uint8_t PIN_EPD_PWR  = -1;  // Not used on integrated board
+// I2C Pins for BME280 (reserved for future expansion, no sensor on EE04)
+const uint8_t PIN_BME_SDA  = 5;   // D4 - Standard I2C SDA
+const uint8_t PIN_BME_SCL  = 6;   // D5 - Standard I2C SCL
+const uint8_t PIN_BME_PWR  = -1;  // Not needed
+const uint8_t BME_ADDRESS  = 0x76; // If sensor does not work, try 0x77
+#else
+// FireBeetle 2 ESP32-E microcontroller board
 // The configuration below is intended for use with the project's official 
 // wiring diagrams using the FireBeetle 2 ESP32-E microcontroller board.
 //
@@ -42,10 +64,13 @@ const uint8_t PIN_BME_SDA = 17;
 const uint8_t PIN_BME_SCL = 16;
 const uint8_t PIN_BME_PWR =  4;   // Irrelevant if directly connected to 3.3V
 const uint8_t BME_ADDRESS = 0x76; // If sensor does not work, try 0x77
+#endif
 
 // WIFI
-const char *WIFI_SSID     = "t2";
-const char *WIFI_PASSWORD = "Feckless Foxes 2 Day!";
+// const char *WIFI_SSID     = "t2";
+// const char *WIFI_PASSWORD = "Feckless Foxes 2 Day!";
+const char *WIFI_SSID     = "NipperNetII";
+const char *WIFI_PASSWORD = "2bitsofKibble";
 const unsigned long WIFI_TIMEOUT = 10000; // ms, WiFi connection timeout.
 
 // HTTP
@@ -118,7 +143,7 @@ const unsigned long NTP_TIMEOUT = 20000; // ms
 // Aligned to the nearest minute boundary and must evenly divide 60.
 // For example, if set to 30 (minutes) the display will update at 00 or 30
 // minutes past the hour. (range: [2-60])
-const long SLEEP_DURATION = 30;
+const long SLEEP_DURATION = 1;
 // If BED_TIME == WAKE_TIME, then this battery saving feature will be disabled.
 // (range: [0-23])
 const int BED_TIME  = 00; // Last update at 00:00 (midnight) until WAKE_TIME.

@@ -41,6 +41,29 @@
  */
 uint32_t readBatteryVoltage()
 {
+#ifdef SEEDSTUDIO_TRMNL
+  // ESP32-S3 battery voltage reading
+  // The XIAO ESP32-S3 has a voltage divider (typically 2:1) on the battery pin
+  // ESP32-S3 ADC is 12-bit with a 0-3.3V range (0-4095)
+  pinMode(PIN_BAT_ADC, INPUT);
+  uint16_t adc_val = analogRead(PIN_BAT_ADC);
+  
+  // Convert ADC reading to millivolts
+  // Formula: (adc_value * 3300mV * 2) / 4095
+  // The *2 accounts for the voltage divider
+  uint32_t batteryVoltage = (adc_val * 3300 * 2) / 4095;
+  
+#if DEBUG_LEVEL >= 1
+  Serial.print("[debug] XIAO ESP32-S3 ADC raw: ");
+  Serial.print(adc_val);
+  Serial.print(", Battery voltage: ");
+  Serial.print(batteryVoltage);
+  Serial.println("mV");
+#endif
+  
+  return batteryVoltage;
+#else
+  // FireBeetle ESP32-E battery voltage reading
   esp_adc_cal_characteristics_t adc_chars;
   // __attribute__((unused)) disables compiler warnings about this variable
   // being unused (Clang, GCC) which is the case when DEBUG_LEVEL == 0.
@@ -76,6 +99,7 @@ uint32_t readBatteryVoltage()
   // multiplied by 2.
   batteryVoltage *= 2;
   return batteryVoltage;
+#endif
 } // end readBatteryVoltage
 
 /* Returns battery percentage, rounded to the nearest integer.
@@ -1592,6 +1616,7 @@ const char *getWifiStatusPhrase(wl_status_t status)
  */
 void disableBuiltinLED()
 {
+  return;
   pinMode(LED_BUILTIN, OUTPUT);
   digitalWrite(LED_BUILTIN, LOW);
   gpio_hold_en(static_cast<gpio_num_t>(LED_BUILTIN));

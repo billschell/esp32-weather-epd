@@ -255,7 +255,7 @@
 //   level 0: basic status information, assists troubleshooting (default)
 //   level 1: increased verbosity for debugging
 //   level 2: print api responses to serial monitor
-#define DEBUG_LEVEL 1
+#define DEBUG_LEVEL 2
 
 // Set the below constants in "config.cpp"
 extern const uint8_t PIN_BAT_ADC;
