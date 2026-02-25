@@ -37,31 +37,34 @@
 #include "icons/icons_64x64.h"
 #include "icons/icons_196x196.h"
 
+
 /* Returns battery voltage in millivolts (mv).
  */
 uint32_t readBatteryVoltage()
 {
 #ifdef SEEDSTUDIO_TRMNL
-  // ESP32-S3 battery voltage reading
-  // The XIAO ESP32-S3 has a voltage divider (typically 2:1) on the battery pin
-  // ESP32-S3 ADC is 12-bit with a 0-3.3V range (0-4095)
+  // EE04 battery voltage reading
+  analogReadResolution(12);
   pinMode(PIN_BAT_ADC, INPUT);
-  uint16_t adc_val = analogRead(PIN_BAT_ADC);
-  
-  // Convert ADC reading to millivolts
-  // Formula: (adc_value * 3300mV * 2) / 4095
-  // The *2 accounts for the voltage divider
-  uint32_t batteryVoltage = (adc_val * 3300 * 2) / 4095;
+  pinMode(PIN_BAT_ADC_ENABLE, OUTPUT);
+  digitalWrite(PIN_BAT_ADC_ENABLE, HIGH);
+
+  // Read 10 times, or until we get a non-zero reading, whichever comes first.
+  int adc_val;
+  for (int i = 0; i < 10; i++) {
+    adc_val = analogReadMilliVolts(PIN_BAT_ADC);
+    if (adc_val > 0) 
+      break;
+    delay(2);
+  }
+  digitalWrite(PIN_BAT_ADC_ENABLE, LOW);  // Disable ADC after reading
+  uint32_t batteryVoltage = adc_val * 2; // voltage divider is 2:1, so multiply by 2 to get actual voltage  
   
 #if DEBUG_LEVEL >= 1
-  Serial.print("[debug] XIAO ESP32-S3 ADC raw: ");
-  Serial.print(adc_val);
-  Serial.print(", Battery voltage: ");
-  Serial.print(batteryVoltage);
-  Serial.println("mV");
+  Serial.printf("[debug] XIAO ESP32-S3 ADC raw: %d, Battery voltage: %d mV\r\n", adc_val, batteryVoltage);
 #endif
-  
   return batteryVoltage;
+
 #else
   // FireBeetle ESP32-E battery voltage reading
   esp_adc_cal_characteristics_t adc_chars;

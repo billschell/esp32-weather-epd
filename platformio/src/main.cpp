@@ -123,6 +123,12 @@ void setup()
 {
   unsigned long startTime = millis();
   Serial.begin(115200);
+  delay(500); // give time for serial monitor to start
+  
+  #if DEBUG_LEVEL >= 1
+  Serial.println("\n\nESP32 Weather EPD Starting Up...\n");
+  printHeapUsage();
+  #endif
 
 #if DEBUG_LEVEL >= 1
   printHeapUsage();
@@ -196,14 +202,6 @@ void setup()
   // All data should have been loaded from NVS. Close filesystem.
   prefs.end();
 
-
-  delay(3000);
-  void i2c_scan();
-  Wire.begin();
-  i2c_scan();
-  Wire.end();
-
-
   String statusStr = {};
   String tmpStr = {};
   tm timeInfo = {};
@@ -234,6 +232,12 @@ void setup()
     powerOffDisplay();
     beginDeepSleep(startTime, &timeInfo);
   }
+  #if DEBUG_LEVEL >= 1
+  else // WiFi Connected
+  {
+    Serial.println("WiFi connected, strength: " + String(wifiRSSI) + "dBm");
+  }
+  #endif
 
   // TIME SYNCHRONIZATION
   configTzTime(TIMEZONE, NTP_SERVER_1, NTP_SERVER_2);
@@ -250,6 +254,19 @@ void setup()
     powerOffDisplay();
     beginDeepSleep(startTime, &timeInfo);
   }
+
+  #if DEBUG_LEVEL >= 1
+  {
+    Serial.println("Time synchronized, current time: ");
+    Serial.print(": ");
+    Serial.print(timeInfo.tm_hour);
+    Serial.print(":");
+    Serial.print(timeInfo.tm_min);
+    Serial.print(":");
+    Serial.println(timeInfo.tm_sec);
+  }
+  #endif
+
 
   // MAKE API REQUESTS
 #ifdef USE_HTTP
@@ -291,15 +308,25 @@ void setup()
   }
   killWiFi(); // WiFi no longer needed
 
+  #if INTUITIVE_MIN_MAX_TEMPERATURES
+  // Compute intuitive min/max temperatures for forecasts
+  // - Min: overnight low from 4pm to next day's sunrise
+  // - Max: daytime high from sunrise to midnight
+  computeIntuitiveMinMax(owm_onecall);
+  #endif
+
+  float inTemp     = NAN;
+  float inHumidity = NAN;
+  
+  #if !SEEDSTUDIO_TRMNL
+ 
   // GET INDOOR TEMPERATURE AND HUMIDITY, start BME280...
   pinMode(PIN_BME_PWR, OUTPUT);
   digitalWrite(PIN_BME_PWR, HIGH);
-  float inTemp     = NAN;
-  float inHumidity = NAN;
+
   Serial.print(String(TXT_READING_FROM) + " BME280... ");
   TwoWire I2C_bme = TwoWire(0);
   Adafruit_BME280 bme;
-
   I2C_bme.begin(PIN_BME_SDA, PIN_BME_SCL, 100000); // 100kHz
   if(bme.begin(BME_ADDRESS, &I2C_bme))
   {
@@ -326,6 +353,9 @@ void setup()
     Serial.println(statusStr);
   }
   digitalWrite(PIN_BME_PWR, LOW);
+  #else
+  statusStr = ""; // "BME " + String(TXT_NOT_FOUND); // no temperature sensor on EE04 board
+  #endif
 
   String refreshTimeStr;
   getRefreshTimeStr(refreshTimeStr, timeConfigured, &timeInfo);

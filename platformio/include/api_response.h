@@ -216,6 +216,11 @@ DeserializationError deserializeOneCall(WiFiClient &json,
 DeserializationError deserializeAirQuality(WiFiClient &json,
                                            owm_resp_air_pollution_t &r);
 
+// Compute intuitive min/max temperatures for daily forecasts
+// - Min: overnight low from 4pm to next day's sunrise  
+// - Max: daytime high from sunrise to midnight
+void computeIntuitiveMinMax(owm_resp_onecall_t &r);
+
 
 #endif
 

@@ -224,8 +224,10 @@ void drawMultiLnString(int16_t x, int16_t y, const String &text,
  */
 void initDisplay()
 {
-  // pinMode(PIN_EPD_PWR, OUTPUT);
-  // digitalWrite(PIN_EPD_PWR, HIGH);
+#if !SEEDSTUDIO_TRMNL
+  pinMode(PIN_EPD_PWR, OUTPUT);
+  digitalWrite(PIN_EPD_PWR, HIGH);
+#endif
 #ifdef DRIVER_WAVESHARE
   display.init(115200, true, 2, false);
   // remap spi for waveshare

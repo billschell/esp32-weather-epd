@@ -21,24 +21,25 @@
 // PINS
 #ifdef SEEDSTUDIO_TRMNL
 // Seeed Studio XIAO ESP32-S3 with ePaper Display Board EE04
-// The XIAO ePaper board has an integrated 7.5" e-paper display
-//
-// ADC pin used to measure battery voltage
-const uint8_t PIN_BAT_ADC  = 1;   // ESP32-S3 GPIO1 - Battery voltage
+const uint8_t PIN_BAT_ADC  = A0;   // Xiao ESP32-S3 - Battery voltage
+const uint8_t PIN_BAT_ADC_ENABLE = 6;   // enables battery voltage reading when set HIGH
+const float_t BATTERY_CALIBRATION_FACTOR = 1.4; // Multimeter derived factor to calibrate battery voltage readings
+
 // Pins for E-Paper Display (integrated on EE04 board)
 const uint8_t PIN_EPD_BUSY = 4;   // D3
 const uint8_t PIN_EPD_CS   = 44;  // D7
 const uint8_t PIN_EPD_RST  = 38;  // D11
 const uint8_t PIN_EPD_DC   = 10;  // D16
 const uint8_t PIN_EPD_SCK  = 8;   // D8
-const uint8_t PIN_EPD_MISO = 9;   // D9 (part of SPI but not used by display)
-const uint8_t PIN_EPD_MOSI = 9;   // D10
-const uint8_t PIN_EPD_PWR  = -1;  // Not used on integrated board
-// I2C Pins for BME280 (reserved for future expansion, no sensor on EE04)
-const uint8_t PIN_BME_SDA  = 5;   // D4 - Standard I2C SDA
-const uint8_t PIN_BME_SCL  = 6;   // D5 - Standard I2C SCL
-const uint8_t PIN_BME_PWR  = -1;  // Not needed
-const uint8_t BME_ADDRESS  = 0x76; // If sensor does not work, try 0x77
+const uint8_t PIN_EPD_MISO = 10;  // D9 (part of SPI but not used by display)
+const uint8_t PIN_EPD_MOSI = 11;  // D10
+const uint8_t PIN_EPD_PWR  = -1;  // Not used on EE04
+
+// Placeholder values required to satisfy extern declarations in config.h
+const uint8_t PIN_BME_SDA  = 5;   // unused - no BME280 on EE04
+const uint8_t PIN_BME_SCL  = 5;   // unused - no BME280 on EE04 
+const uint8_t PIN_BME_PWR  = -1;  // unused
+const uint8_t BME_ADDRESS  = 0x76; // unused
 #else
 // FireBeetle 2 ESP32-E microcontroller board
 // The configuration below is intended for use with the project's official 
@@ -67,10 +68,8 @@ const uint8_t BME_ADDRESS = 0x76; // If sensor does not work, try 0x77
 #endif
 
 // WIFI
-// const char *WIFI_SSID     = "t2";
-// const char *WIFI_PASSWORD = "Feckless Foxes 2 Day!";
-const char *WIFI_SSID     = "NipperNetII";
-const char *WIFI_PASSWORD = "2bitsofKibble";
+const char *WIFI_SSID     = WIFI_SSID; // Set in .env file, passed as build flag to compiler
+const char *WIFI_PASSWORD = WIFI_PASSWORD;
 const unsigned long WIFI_TIMEOUT = 10000; // ms, WiFi connection timeout.
 
 // HTTP
@@ -83,7 +82,7 @@ const unsigned HTTP_CLIENT_TCP_TIMEOUT = 10000; // ms
 
 // OPENWEATHERMAP API
 // OpenWeatherMap API key, https://openweathermap.org/
-const String OWM_APIKEY   = "641142a6b4e302f029a553340c57ad14";
+const String OWM_APIKEY   = OWM_APIKEY; // Set in .env file
 const String OWM_ENDPOINT = "api.openweathermap.org";
 // OpenWeatherMap One Call 2.5 API is deprecated for all new free users
 // (accounts created after Summer 2022).
@@ -104,10 +103,15 @@ const String OWM_ONECALL_VERSION = "3.0";
 // LOCATION
 // Set your latitude and longitude.
 // (used to get weather data as part of API requests to OpenWeatherMap)
-const String LAT = "40.6104";
-const String LON = "-74.5475";
+
+
+// Latitude and Longitude for Somerset Airport
+const String LAT = LAT;
+const String LON = LON;
+
 // City name that will be shown in the top-right corner of the display.
-const String CITY_STRING = "Grouse Road";
+const String CITY_STRING = CITY_STRING; // Set in .env file
+
 
 // TIME
 // For list of time zones see
@@ -143,7 +147,7 @@ const unsigned long NTP_TIMEOUT = 20000; // ms
 // Aligned to the nearest minute boundary and must evenly divide 60.
 // For example, if set to 30 (minutes) the display will update at 00 or 30
 // minutes past the hour. (range: [2-60])
-const long SLEEP_DURATION = 1;
+const long SLEEP_DURATION = 15;
 // If BED_TIME == WAKE_TIME, then this battery saving feature will be disabled.
 // (range: [0-23])
 const int BED_TIME  = 00; // Last update at 00:00 (midnight) until WAKE_TIME.

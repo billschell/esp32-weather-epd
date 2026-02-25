@@ -39,6 +39,7 @@
 // The Waveshare rev2.2 is no longer in production.
 // Users of the Waveshare rev2.3 have reported experiencing low contrast issues.
 // Uncomment the macro that identifies your driver board hardware.
+// Use DRIVER_DESPI_C02 for the SEEDSTUDIO TRMNL XIAO ESP32-S3 with ePaper Display Board EE04
 #define DRIVER_DESPI_C02
 // #define DRIVER_WAVESHARE
 
@@ -226,6 +227,20 @@
 //   2 : Smart (show only when precipitation is forecasted)
 #define DISPLAY_DAILY_PRECIP 2
 
+// Min/Max Temperature Calculation
+// By default, the min and max temperatures for daily forecasts are taken
+// directly from the OpenWeatherMap API. These values are based on a
+// midnight-to-midnight period, which may not align with how people typically
+// think about daily temperatures. INTUITIVE_MIN_MAX_TEMPERATURES can be defined to
+// recompute min and max temperatures to better match common expectations:
+// - Min (overnight low): minimum temp from 4pm (16:00)
+//   to next day's sunrise
+// - Max (daytime high): maximum temp from sunrise to midnight
+// This computation uses hourly data when available (48 hours),
+// falling back to daily temp values (morn, day, eve, night) for days beyond
+// hourly coverage.
+#define INTUITIVE_MIN_MAX_TEMPERATURES 1
+
 // ALERTS
 //   The handling of alerts is complex. Each country has a unique national alert
 //   system that receives alerts from many different government agencies. This
@@ -255,10 +270,12 @@
 //   level 0: basic status information, assists troubleshooting (default)
 //   level 1: increased verbosity for debugging
 //   level 2: print api responses to serial monitor
-#define DEBUG_LEVEL 2
+#define DEBUG_LEVEL 0
 
 // Set the below constants in "config.cpp"
 extern const uint8_t PIN_BAT_ADC;
+extern const uint8_t PIN_BAT_ADC_ENABLE;
+extern const float_t BATTERY_CALIBRATION_FACTOR;
 extern const uint8_t PIN_EPD_BUSY;
 extern const uint8_t PIN_EPD_CS;
 extern const uint8_t PIN_EPD_RST;

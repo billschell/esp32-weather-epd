@@ -16,9 +16,12 @@
  */
 
 #include <vector>
+#include <cmath>
+#include <algorithm>
 #include <ArduinoJson.h>
 #include "api_response.h"
 #include "config.h"
+#include "conversions.h"
 
 DeserializationError deserializeOneCall(WiFiClient &json,
                                         owm_resp_onecall_t &r)
@@ -252,4 +255,132 @@ DeserializationError deserializeAirQuality(WiFiClient &json,
 
   return error;
 } // end deserializeAirQuality
+
+#if INTUITIVE_MIN_MAX_TEMPERATURES
+/* Compute intuitive min/max temperatures for daily forecasts.
+ * 
+ * The OpenWeatherMap API returns min/max based on midnight-to-midnight, which
+ * doesn't match how people typically think about daily temperatures.
+ * 
+ * This function recomputes:
+ * - Min (overnight low): minimum temp from 4pm (16:00) to next day's sunrise
+ * - Max (daytime high): maximum temp from sunrise to midnight
+ * 
+ * Uses hourly data when available (48 hours), falls back to daily temp values
+ * (morn, day, eve, night) for days beyond hourly coverage.
+ */
+void computeIntuitiveMinMax(owm_resp_onecall_t &r)
+{
+  // Process each day (we display 5 days, indices 0-4)
+  for (int day = 0; day < 5; ++day)
+  {
+    owm_daily_t &today = r.daily[day];
+
+  #if DEBUG_LEVEL >= 1
+    // Save original API values before modification
+    float origMin = today.temp.min;
+    float origMax = today.temp.max;
+  #endif
+    
+    // Get sunrise time for today as the boundary for daytime
+    int64_t todaySunrise = today.sunrise;
+    
+    // Get the start of today (midnight) in local time
+    // daily.dt is typically noon of that day, so we calculate midnight
+    int64_t todayNoon = today.dt;
+    int64_t todayMidnight = todayNoon - (12 * 3600); // approximate midnight
+    int64_t todayEndOfDay = todayMidnight + (24 * 3600); // next midnight
+    
+    // 4pm today for overnight low calculation
+    int64_t today4pm = todayMidnight + (16 * 3600);
+    
+    // Next day's sunrise for overnight low endpoint
+    int64_t nextDaySunrise;
+    if (day + 1 < OWM_NUM_DAILY)
+    {
+      nextDaySunrise = r.daily[day + 1].sunrise;
+    }
+    else
+    {
+      // If we don't have next day data, estimate sunrise ~same time next day
+      nextDaySunrise = todaySunrise + (24 * 3600);
+    }
+    
+    // Variables to track min/max from hourly data
+    float hourlyMax = -1e9f;  // Start with very low value
+    float hourlyMin = 1e9f;   // Start with very high value
+    bool foundMaxHourly = false;
+    bool foundMinHourly = false;
+    
+    // Search through hourly data
+    for (int h = 0; h < OWM_NUM_HOURLY; ++h)
+    {
+      int64_t hourTime = r.hourly[h].dt;
+      float hourTemp = r.hourly[h].temp;
+      
+      // Check if this hour falls in the daytime high window (sunrise to midnight)
+      if (hourTime >= todaySunrise && hourTime < todayEndOfDay)
+      {
+        if (hourTemp > hourlyMax)
+        {
+          hourlyMax = hourTemp;
+          foundMaxHourly = true;
+        }
+      }
+      
+      // Check if this hour falls in the overnight low window (4pm to next sunrise)
+      if (hourTime >= today4pm && hourTime < nextDaySunrise)
+      {
+        if (hourTemp < hourlyMin)
+        {
+          hourlyMin = hourTemp;
+          foundMinHourly = true;
+        }
+      }
+    }
+    
+    // Update max temperature
+    if (foundMaxHourly)
+    {
+      today.temp.max = hourlyMax;
+    }
+    else
+    {
+      // Fall back to daily values: max of morn, day, eve (daytime hours)
+      today.temp.max = std::max({today.temp.morn, today.temp.day, today.temp.eve});
+    }
+    
+    // Update min temperature  
+    if (foundMinHourly)
+    {
+      today.temp.min = hourlyMin;
+    }
+    else
+    {
+      // Fall back to daily values: min of eve, night from today
+      // and morn from next day if available
+      float fallbackMin = std::min(today.temp.eve, today.temp.night);
+      if (day + 1 < OWM_NUM_DAILY)
+      {
+        fallbackMin = std::min(fallbackMin, r.daily[day + 1].temp.morn);
+      }
+      today.temp.min = fallbackMin;
+    }
+
+#if DEBUG_LEVEL >= 1
+    Serial.println("[debug] Day " + String(day) + " temp adjustments:");
+    Serial.println("  API Max: " + String(kelvin_to_fahrenheit(origMax), 1) + "F / " 
+                   + String(kelvin_to_celsius(origMax), 1) + "C  ->  "
+                   "New Max: " + String(kelvin_to_fahrenheit(today.temp.max), 1) + "F / "
+                   + String(kelvin_to_celsius(today.temp.max), 1) + "C"
+                   + (foundMaxHourly ? " (hourly)" : " (fallback)"));
+    Serial.println("  API Min: " + String(kelvin_to_fahrenheit(origMin), 1) + "F / "
+                   + String(kelvin_to_celsius(origMin), 1) + "C  ->  "
+                   "New Min: " + String(kelvin_to_fahrenheit(today.temp.min), 1) + "F / "
+                   + String(kelvin_to_celsius(today.temp.min), 1) + "C"
+                   + (foundMinHourly ? " (hourly)" : " (fallback)"));
+#endif
+  }
+} // end computeIntuitiveMinMax
+#endif // INTUITIVE_MIN_MAX_TEMPERATURES
 
